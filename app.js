@@ -30,6 +30,7 @@ app.use('/gallery', galleryRouter);
 
 /** error ********************************/
 app.use((req, res, next) => {
+	
 	const err = new Error();
 	err.code = 404;
 	err.msg = '요청하신 페이지를 찾을 수 없습니다.';

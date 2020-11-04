@@ -2,6 +2,7 @@ const express = require('express');
 const moment = require('moment');
 const router = express.Router();
 const { pool } = require('../modules/mysql-conn');
+const {alert} = require('../modules/util');
 
 
 router.get(['/', '/list'], async (req, res, next) => {
@@ -10,6 +11,7 @@ router.get(['/', '/list'], async (req, res, next) => {
 		const sql = 'SELECT * FROM board ORDER BY id DESC';
 		const connect = await pool.getConnection();
 		const rs = await connect.query(sql);
+		connect.release();
 		pug.lists = rs[0];
 		pug.lists.forEach((v) => {
 			v.wdate = moment(v.wdate).format('YYYY년 MM월 DD일');
@@ -32,10 +34,10 @@ router.post('/save', async (req, res, next) => {
 	var values = [title, writer, content];
 	var sql = 'INSERT INTO board SET title=?, writer=?, content=?';
 	try {
-		const connect = await pool.getConnection();
-		const rs = await connect.query(sql, values);
-		connect.release();
-		res.redirect('/board');
+			const connect = await pool.getConnection();
+			const rs = await connect.query(sql, values);
+			connect.release();
+			res.redirect('/board');
 	}
 	catch(err) {
 		next(err);
@@ -59,7 +61,7 @@ router.get('/view/:id', async (req, res) => {
 	}
 });
 
-router.get('/delete/:id', async (req, res) => {
+router.get('/delete/:id', async (req, res ,next) => {
 	const id =req.params.id;
 	try{
 		const sql ='DELETE FROM board WHERE id=?';
@@ -92,20 +94,20 @@ router.get('/update/:id', async(req, res, next) =>{
 
 });
 
-router.post('saveUpdate',async (req, res, next)=>{
+router.post('/saveUpdate',async (req, res, next)=>{
 
-	const { title, content, writer } = req.body;
+	const { id, title, writer , content} = req.body;
 	try{
-		const sql = "UPDATE board SET title=?, writer=? , content=? , where id=?";
-		const values=[title,content, writer ];
-		const connenct = await pool.getConnection();
-		const rs= await this.connect.query(sql, values);
-
-		if(rs[0].affectedRows ==1){
+		const sql = "UPDATE board SET title=?, writer=? , content=? WHERE id=?";
+		const values=[title, writer,content,id ];
+		const connect = await pool.getConnection();
+		const rs= await connect.query(sql, values);
+		//connect.release();
+		if(rs[0].affectedRows ==1)
 			res.send(alert('수정되었습니다.','/board'));
-			//res.render('./board/write.pug',pug);
-		}
-		connect.release();
+		
+		else res.send(alert('수정에 실패하였습니다.','/board'));
+		
 	}
 	catch(e){
 		next(e);
