@@ -5,13 +5,19 @@ const { pool } = require('../modules/mysql-conn');
 const {alert} = require('../modules/util');
 
 
-router.get(['/', '/list'], async (req, res, next) => {
+//127.0.0.1:3000/board/list/3?cnt=10
+//127.0.0.1:3000/board?cnt=10
+//127.0.0.1:3000/board/list?cnt=10
+
+router.get(['/', '/list','/list/:page'], async (req, res, next) => {
 	const pug = {title: '게시판 리스트', js: 'board', css: 'board'};
 	try {
+		let page =req.params.page || 1 , cnt = req.query.cnt || 5;
 		const sql = 'SELECT * FROM board ORDER BY id DESC';
 		const connect = await pool.getConnection();
 		const rs = await connect.query(sql);
 		connect.release();
+		//console.log(rs[0][6]);
 		pug.lists = rs[0];
 		pug.lists.forEach((v) => {
 			v.wdate = moment(v.wdate).format('YYYY년 MM월 DD일');
@@ -44,7 +50,7 @@ router.post('/save', async (req, res, next) => {
 	}
 });
 
-router.get('/view/:id', async (req, res) => {
+router.get('/view/:id', async (req, res ,next) => {
 	try {
 		const pug = {title: '게시글 보기', js: 'board', css: 'board'};
 		const sql = "SELECT * FROM board WHERE id=?";
